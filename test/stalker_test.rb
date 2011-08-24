@@ -77,6 +77,15 @@ class StalkerTest < Test::Unit::TestCase
     Stalker.work_one_job
     assert_equal true, $handled
   end
+  
+  test "before filter sees args" do
+    Stalker.before { |name, args| $args = args }
+    Stalker.job('my.job') {  }
+    Stalker.enqueue('my.job', :foo => 123)
+    Stalker.prep
+    Stalker.work_one_job
+    assert_equal({'foo' => 123}, $args)
+  end
 
   test "before filter passes the name of the job" do
     Stalker.before { |name| $jobname = name }
