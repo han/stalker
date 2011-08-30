@@ -77,7 +77,7 @@ module Stalker
       Timeout::timeout(job.ttr - 1) do
         if defined? @@before_handlers and @@before_handlers.respond_to? :each
           @@before_handlers.each do |block|
-            block.call(name, args)
+            block.arity == 1 ? block.call(name) : block.call(name,args)
           end
         end
         handler.call(args)
