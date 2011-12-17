@@ -80,7 +80,7 @@ module Stalker
             block.call(name)
           end
         end
-        handler.call(args)
+        handler.call(args,job)
       end
     rescue Timeout::Error
       raise JobTimeout, "#{name} hit #{job.ttr-1}s timeout"
