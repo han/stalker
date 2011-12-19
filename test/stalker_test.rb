@@ -31,6 +31,20 @@ class StalkerTest < Test::Unit::TestCase
     assert_equal val, $result
   end
 
+  test "job can optionally specify job in arguments list" do
+    val = rand(999999)
+    $job = nil
+    Stalker.job('my.job') do |args, job| 
+      $result = args['val']
+      $job = job
+    end
+    Stalker.enqueue('my.job', :val => val)
+    Stalker.prep
+    Stalker.work_one_job
+    assert_equal val, $result
+    assert_kind_of Beanstalk::Job, $job  
+  end
+
   test "invoke error handler when defined" do
     with_an_error_handler
     Stalker.job('my.job') { |args| fail }
