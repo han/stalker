@@ -23,7 +23,7 @@ class StalkerTest < Test::Unit::TestCase
   end
 
   test "enqueue and work a job" do
-    val = rand(999999)
+    val = 12345 
     Stalker.job('my.job') { |args| $result = args['val'] }
     Stalker.enqueue('my.job', :val => val)
     Stalker.prep
@@ -32,17 +32,26 @@ class StalkerTest < Test::Unit::TestCase
   end
 
   test "job can optionally specify job in arguments list" do
-    val = rand(999999)
+    val = 12345 
     $job = nil
     Stalker.job('my.job') do |args, job| 
       $result = args['val']
-      $job = job
+      $job    = job
     end
     Stalker.enqueue('my.job', :val => val)
     Stalker.prep
     Stalker.work_one_job
     assert_equal val, $result
     assert_kind_of Beanstalk::Job, $job  
+  end
+
+  test "job can run forever with infinite timeout" do
+    val = rand(999999)
+    Stalker.job('my.job') { |args| sleep(1); $result = args['val'] }
+    Stalker.enqueue('my.job', {:val => val}, {:ttr => 0})
+    Stalker.prep
+    Stalker.work_one_job
+    assert_equal val, $result
   end
 
   test "invoke error handler when defined" do

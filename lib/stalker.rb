@@ -73,23 +73,17 @@ module Stalker
     handler = @@handlers[name]
     raise(NoSuchJob, name) unless handler
 
-    begin
-      Timeout::timeout(job.ttr - 1) do
-        if defined? @@before_handlers and @@before_handlers.respond_to? :each
-          @@before_handlers.each do |block|
-            block.call(name)
-          end
+    if job.ttr > 0
+      begin
+        Timeout::timeout(job.ttr - 1) do
+          execute_job(handler,args,name,job)
         end
-        if handler.arity == 1
-          handler.call(args)
-        else
-          handler.call(args,job)
-        end 
-     end
-    rescue Timeout::Error
-      raise JobTimeout, "#{name} hit #{job.ttr-1}s timeout"
-    end
-
+      rescue Timeout::Error
+        raise JobTimeout, "#{name} hit #{job.ttr-1}s timeout"
+      end
+    else
+      execute_job(handler,args,name,job)
+    end 
     job.delete
     log_job_end(name)
   rescue Beanstalk::NotConnected => e
@@ -107,6 +101,19 @@ module Stalker
         error_handler.call(e, name, args)
       end
     end
+  end
+
+  def execute_job(handler,args,name,job)
+    if defined? @@before_handlers and @@before_handlers.respond_to? :each
+      @@before_handlers.each do |block|
+        block.call(name)
+      end
+    end
+    if handler.arity == 1
+      handler.call(args)
+    else
+      handler.call(args,job)
+    end 
   end
 
   def failed_connection(e)
