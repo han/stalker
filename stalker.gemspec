@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "stalker"
-  s.version = "0.9.1"
+  s.version = "0.10.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = "2011-12-17"
+  s.date = "2011-12-19"
   s.description = "A job queueing and background workers system using Beanstalkd.  Inspired by the Minion gem."
   s.email = "adam@heroku.com"
   s.executables = ["stalk"]
