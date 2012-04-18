@@ -31,6 +31,14 @@ class StalkerTest < Test::Unit::TestCase
     assert_equal val, $result
   end
 
+  test "should pass :beanstalk_job_id to the job" do
+    Stalker.job('my.job') { |args| $result = args[:beanstalk_job_id] }
+    job_id = Stalker.enqueue('my.job')
+    Stalker.prep
+    Stalker.work_one_job
+    assert_equal job_id, $result
+  end
+
   test "invoke error handler when defined" do
     with_an_error_handler
     Stalker.job('my.job') { |args| fail }
@@ -39,6 +47,7 @@ class StalkerTest < Test::Unit::TestCase
     Stalker.work_one_job
     assert $handled
     assert_equal 'my.job', $job_name
+    remove_beanstalk_job_id $job_args
     assert_equal({'foo' => 123}, $job_args)
   end
 
@@ -105,9 +114,10 @@ class StalkerTest < Test::Unit::TestCase
     Stalker.work_one_job
     assert $handled
     assert_equal 'my.job', $job_name
+    remove_beanstalk_job_id $job_args
     assert_equal({'foo' => 123}, $job_args)
   end
-  
+
   test "parse BEANSTALK_URL" do
     ENV['BEANSTALK_URL'] = "beanstalk://localhost:12300"
     assert_equal Stalker.beanstalk_addresses, ["localhost:12300"]
@@ -117,8 +127,12 @@ class StalkerTest < Test::Unit::TestCase
     assert_equal Stalker.beanstalk_addresses, ["localhost:12300","localhost:12301"]
     ENV['BEANSTALK_URL'] = "beanstalk://localhost:12300, http://localhost:12301"
     assert_raise Stalker::BadURL do
-      Stalker.beanstalk_addresses 
+      Stalker.beanstalk_addresses
     end
+  end
+
+  def remove_beanstalk_job_id(args)
+    args.delete :beanstalk_job_id
   end
 
 end
