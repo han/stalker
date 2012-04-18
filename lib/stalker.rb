@@ -12,9 +12,9 @@ module Stalker
   end
 
   def enqueue(job, args={}, opts={})
-    pri   = opts[:pri]   || 65536
-    delay = [0, opts[:delay].to_i].max  
-    ttr   = opts[:ttr]   || 120
+    pri   = opts[:pri] || 65536
+    delay = [0, opts[:delay].to_i].max
+    ttr   = opts[:ttr] || 0
     beanstalk.use job
     beanstalk.put [ job, args ].to_json, pri, delay, ttr
   rescue Beanstalk::NotConnected => e
@@ -73,17 +73,26 @@ module Stalker
     handler = @@handlers[name]
     raise(NoSuchJob, name) unless handler
 
-    begin
-      Timeout::timeout(job.ttr - 1) do
-        if defined? @@before_handlers and @@before_handlers.respond_to? :each
-          @@before_handlers.each do |block|
-            block.call(name)
+    if job.ttr > 0
+      begin
+        Timeout::timeout(job.ttr - 1) do
+          if defined? @@before_handlers and @@before_handlers.respond_to? :each
+            @@before_handlers.each do |block|
+              block.call(name)
+            end
           end
+          handler.call(args)
         end
-        handler.call(args)
+      rescue Timeout::Error
+        raise JobTimeout, "#{name} hit #{job.ttr-1}s timeout"
       end
-    rescue Timeout::Error
-      raise JobTimeout, "#{name} hit #{job.ttr-1}s timeout"
+    else
+      if defined? @@before_handlers and @@before_handlers.respond_to? :each
+        @@before_handlers.each do |block|
+          block.call(name)
+        end
+      end
+      handler.call(args)
     end
 
     job.delete
@@ -95,7 +104,7 @@ module Stalker
   rescue => e
     log_error exception_message(e)
     job.bury rescue nil
-		log_job_end(name, 'failed') if @job_begun
+    log_job_end(name, 'failed') if @job_begun
     if error_handler
       if error_handler.arity == 1
         error_handler.call(e)
