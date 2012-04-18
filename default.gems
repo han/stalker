@@ -1,0 +1,4 @@
+# default.gems generated gem export file. Note that any env variable settings will be missing. Append these after using a ';' field separator
+beanstalk-client -v1.1.0
+contest -v0.1.3
+mocha -v0.9.12
