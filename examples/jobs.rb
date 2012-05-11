@@ -1,11 +1,14 @@
-job 'send.email' do |args|
-  log "Sending email to #{args['email']}"
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
+require 'stalker'
+
+Stalker.job 'send.email' do |args|
+  Stalker.log "Sending email to #{args['email']}"
 end
 
-job 'transform.image' do |args|
-  log "Image transform"
+Stalker.job 'transform.image' do |args|
+  Stalker.log "Image transform"
 end
 
-job 'cleanup.strays' do |args|
-  log "Cleaning up"
+Stalker.job 'cleanup.strays' do |args|
+  Stalker.log "Cleaning up"
 end
