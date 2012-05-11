@@ -61,7 +61,8 @@ module Stalker
 
   def work(jobs=nil)
     prep(jobs)
-    loop { work_one_job }
+    trap('TERM') { @stop = true; log "SIGTERM trapped, will stop ASAP" }
+    loop { work_one_job; break if @stop }
   end
 
   class JobTimeout < RuntimeError; end
@@ -72,7 +73,6 @@ module Stalker
     log_job_begin(name, args)
     handler = @@handlers[name]
     raise(NoSuchJob, name) unless handler
-
     begin
       Timeout::timeout(job.ttr - 1) do
         if defined? @@before_handlers and @@before_handlers.respond_to? :each
