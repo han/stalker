@@ -88,11 +88,13 @@ module Stalker
     log_job_end(name)
   rescue Beanstalk::NotConnected => e
     failed_connection(e)
-  rescue SystemExit
+  rescue SystemExit, SignalException
+    log_job_end(name)
+    job.delete
     raise
   rescue => e
     log_error exception_message(e)
-    job.bury rescue nil
+    job.exit rescue nil
 		log_job_end(name, 'failed') if @job_begun
     if error_handler
       if error_handler.arity == 1
