@@ -17,8 +17,6 @@ module Stalker
     ttr   = opts[:ttr]   || 120
     beanstalk.use job
     beanstalk.put [ job, args ].to_json, pri, delay, ttr
-  rescue Beanstalk::NotConnected => e
-    failed_connection(e)
   end
 
   def job(j, &block)
@@ -55,8 +53,6 @@ module Stalker
     beanstalk.list_tubes_watched.each do |server, tubes|
       tubes.each { |tube| beanstalk.ignore(tube) unless jobs.include?(tube) }
     end
-  rescue Beanstalk::NotConnected => e
-    failed_connection(e)
   end
 
   def work(jobs=nil)
@@ -88,10 +84,6 @@ module Stalker
 
     job.delete
     log_job_end(name)
-  rescue Beanstalk::NotConnected => e
-    failed_connection(e)
-  rescue SystemExit
-    raise
   rescue => e
     log_error exception_message(e)
     job.bury rescue nil
@@ -103,13 +95,6 @@ module Stalker
         error_handler.call(e, name, args)
       end
     end
-  end
-
-  def failed_connection(e)
-    log_error exception_message(e)
-    log_error "*** Failed connection to #{beanstalk_url}"
-    log_error "*** Check that beanstalkd is running (or set a different BEANSTALK_URL)"
-    exit 1
   end
 
   def log_job_begin(name, args)
