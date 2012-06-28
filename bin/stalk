@@ -9,9 +9,9 @@ usage = "stalk <jobs.rb> [<job>[,<job>,..]]"
 file = ARGV.shift or abort usage
 jobs = ARGV.shift.split(',') rescue nil
 
-file = "./#{file}" unless file.match(/^[\/.]/)
+file = File.expand_path(file)
 
-require file
+load file
 
 trap('INT') do
 	puts "\rExiting"
