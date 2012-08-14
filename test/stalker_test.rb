@@ -31,6 +31,18 @@ class StalkerTest < Test::Unit::TestCase
     assert_equal val, $result
   end
 
+  test "enqueue and work a job with response" do
+    val = rand(999999)
+    worker = Thread.new {
+      Stalker.job('my.job') { |args| args['val'] }
+      Stalker.prep
+      Stalker.work_one_job
+    }
+    result = Stalker.enqueue_with_response('my.job', {:val => val}, :timeout => 10)
+    worker.kill
+    assert_equal val, result['val']
+  end
+
   test "invoke error handler when defined" do
     with_an_error_handler
     Stalker.job('my.job') { |args| fail }
