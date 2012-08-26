@@ -14,7 +14,7 @@ file = "./#{file}" unless file.match(/^[\/.]/)
 require file
 
 trap('INT') do
-	puts "\rExiting"
+	puts "Exiting"
 	exit
 end
 
